@@ -18,12 +18,13 @@ int main(void) {
     n2 = atoi(arg2);
   }
   /* Make the response body */
-  sprintf(content, "QUERY_STRING=%s", buf);
-  sprintf(content, "Welcome to add.com ");
-  sprintf(content, "%sTHE Internet addtion portal.\r\n<p>", content);
-  sprintf(content, "%sThe answer is %d + %d = %d\r\n<p>", content, n1, n2,
-          n1 + n2);
-  sprintf(content, "%sThanks for visiting!\r\n", content);
+  int offset = 0;
+  offset += snprintf(content + offset, sizeof(content) - offset, "QUERY_STRING=%s?%s\r\n", arg1,arg2);
+  offset += snprintf(content + offset, sizeof(content) - offset, "Welcome to add.com ");
+  offset += snprintf(content + offset, sizeof(content) - offset, "THE Internet addition portal.\r\n<p>");
+  offset += snprintf(content + offset, sizeof(content) - offset, "The answer is %d + %d = %d\r\n<p>", n1, n2, n1 + n2);
+  offset += snprintf(content + offset, sizeof(content) - offset, "Thanks for visiting!\r\n");
+
 
   /* Generate the HTTP response */
   printf("Connection: close\r\n");

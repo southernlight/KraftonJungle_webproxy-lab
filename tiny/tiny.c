@@ -134,11 +134,13 @@ void serve_static(int fd, char *filename, int filesize) {
   char *srcp, filetype[MAXLINE], buf[MAXBUF];
   /*Send response headers to client*/
   get_filetype(filename, filetype);
-  sprintf(buf, "HTTP/1.0 200 OK\r\n");
-  sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);
-  sprintf(buf, "%sConnection: close\r\n", buf);
-  sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
-  sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
+  int offset = 0;
+  offset += snprintf(buf + offset, sizeof(buf) - offset, "HTTP/1.0 200 OK\r\n");
+  offset += snprintf(buf + offset, sizeof(buf) - offset, "Server: Tiny Web Server\r\n");
+  offset += snprintf(buf + offset, sizeof(buf) - offset, "Connection: close\r\n");
+  offset += snprintf(buf + offset, sizeof(buf) - offset, "Content-length: %d\r\n", filesize);
+  offset += snprintf(buf + offset, sizeof(buf) - offset, "Content-type: %s\r\n\r\n", filetype);
+
 
   Rio_writen(fd, buf, strlen(buf));
   printf("Response headers:\n");
