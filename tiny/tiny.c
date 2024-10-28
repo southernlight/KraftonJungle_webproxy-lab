@@ -136,11 +136,14 @@ void serve_static(int fd, char *filename, int filesize) {
   get_filetype(filename, filetype);
   int offset = 0;
   offset += snprintf(buf + offset, sizeof(buf) - offset, "HTTP/1.0 200 OK\r\n");
-  offset += snprintf(buf + offset, sizeof(buf) - offset, "Server: Tiny Web Server\r\n");
-  offset += snprintf(buf + offset, sizeof(buf) - offset, "Connection: close\r\n");
-  offset += snprintf(buf + offset, sizeof(buf) - offset, "Content-length: %d\r\n", filesize);
-  offset += snprintf(buf + offset, sizeof(buf) - offset, "Content-type: %s\r\n\r\n", filetype);
-
+  offset += snprintf(buf + offset, sizeof(buf) - offset,
+                     "Server: Tiny Web Server\r\n");
+  offset +=
+      snprintf(buf + offset, sizeof(buf) - offset, "Connection: close\r\n");
+  offset += snprintf(buf + offset, sizeof(buf) - offset,
+                     "Content-length: %d\r\n", filesize);
+  offset += snprintf(buf + offset, sizeof(buf) - offset,
+                     "Content-type: %s\r\n\r\n", filetype);
 
   Rio_writen(fd, buf, strlen(buf));
   printf("Response headers:\n");
@@ -160,6 +163,8 @@ void get_filetype(char *filename, char *filetype) {
     strcpy(filetype, "image/png");
   else if (strstr(filename, ".jpg"))
     strcpy(filetype, "image/jpeg");
+  else if (strstr(filename, ".mpg"))
+    strcpy(filetype, "video/mpeg");
   else
     strcpy(filetype, "text/plain");
 }
