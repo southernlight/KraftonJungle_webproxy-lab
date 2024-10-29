@@ -11,9 +11,9 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize);
+void serve_static(int fd, char *filename, int filesize, char *method);
 void get_filetype(char *filename, char *filetype);
-void serve_dynamic(int fd, char *filename, char *cgiargs);
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
                  char *longmsg);
 
@@ -55,7 +55,8 @@ void doit(int fd) {
   sscanf(buf, "%s %s %s", method, uri, version);
 
   /* 501 에러 */
-  if (strcmp(method, "GET")) // method가 GET이 아닌 경우
+  if (strcmp(method, "GET") ||
+      strcmp(method, "HEAD")) // method가 GET이 아닌 경우
   {
     clienterror(fd, method, "501", "Not implemented",
                 "Tiny does not implement this method");
@@ -81,7 +82,7 @@ void doit(int fd) {
                   "Tiny couldn't read the file");
       return;
     }
-    serve_static(fd, filename, sbuf.st_size);
+    serve_static(fd, filename, sbuf.st_size, method);
   } else {
     if (!(S_ISREG(sbuf.st_mode)) ||
         !(S_IRUSR &
@@ -90,7 +91,7 @@ void doit(int fd) {
                   "Tiny couldn't run CGI the file");
       return;
     }
-    serve_dynamic(fd, filename, cgiargs);
+    serve_dynamic(fd, filename, cgiargs, method);
   }
 }
 
@@ -129,7 +130,7 @@ int parse_uri(char *uri, char *filename, char *cgiargs) {
   }
 }
 
-void serve_static(int fd, char *filename, int filesize) {
+void serve_static(int fd, char *filename, int filesize, char *method) {
   int srcfd;
   char *srcp, filetype[MAXLINE], buf[MAXBUF];
   /*Send response headers to client*/
@@ -149,10 +150,15 @@ void serve_static(int fd, char *filename, int filesize) {
   printf("Response headers:\n");
   printf("%s", buf);
 
-  srcfd = Open(filename, O_RDONLY, 0);
-  srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
-  Rio_writen(fd, srcp, filesize);
-  Munmap(srcp, filesize);
+  if (strcmp(method, "GET") == 0) {
+    srcfd = Open(filename, O_RDONLY, 0);
+    // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+    srcp = (char *)Malloc(filesize * sizeof(char));
+    Rio_readn(srcfd, srcp, filesize);
+    Close(srcfd);
+    free(srcp);
+    // Munmap(srcp, filesize);
+  }
 }
 void get_filetype(char *filename, char *filetype) {
   if (strstr(filename, ".html"))
@@ -168,7 +174,7 @@ void get_filetype(char *filename, char *filetype) {
   else
     strcpy(filetype, "text/plain");
 }
-void serve_dynamic(int fd, char *filename, char *cgiargs) {
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method) {
 
   char buf[MAXLINE], *emptylist[] = {NULL};
 
@@ -180,6 +186,7 @@ void serve_dynamic(int fd, char *filename, char *cgiargs) {
 
   if (Fork() == 0) { /*Child*/
     setenv("QUERY_STRING", cgiargs, 1);
+    setenv("REQUEST_METHOD", method, 1);
     Dup2(fd, STDOUT_FILENO);
     Execve(filename, emptylist, environ);
   }
