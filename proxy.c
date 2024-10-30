@@ -41,13 +41,14 @@ int main(int argc, char **argv) {
     printf("Accepted connection from (%s, %s)\n", hostname, port);
     doit(connfd);  // line:netp:tiny:doit
     Close(connfd); // line:netp:tiny:close
+    
   }
   return 0;
 }
 
 void doit(int fd) {
 
-  char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+  char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], port[MAXLINE];
   char tiny_req[MAXLINE]; // 클라이언트의 요청을 기반으로 Tiny 서버로 전송할
                           // 요청 메시지
   rio_t rio, server_rio; // rio 는 클라이언트로부터 데이터를 읽는 데 사용,
@@ -64,6 +65,7 @@ void doit(int fd) {
                 "Tiny does not implement this method");
     return;
   }
+  read_requesthdrs(&rio);
 
   // 서버에 보낼 GET request와 request header
   int offset = 0;

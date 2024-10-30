@@ -55,7 +55,7 @@ void doit(int fd) {
   sscanf(buf, "%s %s %s", method, uri, version);
 
   /* 501 에러 */
-  if (strcmp(method, "GET") ||
+  if (strcmp(method, "GET") &&
       strcmp(method, "HEAD")) // method가 GET이 아닌 경우
   {
     clienterror(fd, method, "501", "Not implemented",
@@ -156,6 +156,7 @@ void serve_static(int fd, char *filename, int filesize, char *method) {
     srcp = (char *)Malloc(filesize * sizeof(char));
     Rio_readn(srcfd, srcp, filesize);
     Close(srcfd);
+    Rio_writen(fd, srcp, filesize);
     free(srcp);
     // Munmap(srcp, filesize);
   }
